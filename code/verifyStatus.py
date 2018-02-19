@@ -21,16 +21,6 @@ def verifyMember(p_link):
         print ("http request failed. Member is not verified")
     return False
 
-def generateLink(name, reg_time):
-    # gives everyone a unique url
-    # the encoding scheme is base_url + name (ascii) + date of creation
-    root_link = "https:"
-
-    encoded_str = ''
-    for c in name:
-        encoded_str = encoded_str + str(ord(c))
-    return root_link + encoded_str + reg_time
-
 def generateQR(link):
     # Create qr code instance
     # QR code links to the generated link for each member

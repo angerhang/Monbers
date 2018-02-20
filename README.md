@@ -1,11 +1,18 @@
 # Monbers
 ## Dependencies
 Python 3.0+
+pyqrcode
 
 ## How to setup env
 ```
 source env/bin/activate
 ```
+
+## How to run the script 
+```
+python verifyStatus PATH_MEMBER_INFO PATH_PHOTO_PATH
+```
+
 
 ## End-to-end member system in nutshell
 1. Members sign up using Google Form:

@@ -2,6 +2,8 @@
 ## Dependencies
 Python 3.0+
 pyqrcode
+selenium and its driver for getting the page source and member verification
+
 
 ## How to setup env
 ```

@@ -5,6 +5,7 @@ import webbrowser
 import requests
 import sys
 import pandas as pd
+from selenium import webdriver
 
 # Member verification and download the images from google drive
 def verifyMember(p_link):
@@ -13,11 +14,49 @@ def verifyMember(p_link):
     :return: true if the page is valid and contains student
     otherwise no
     """
+    # without doctoral
+    # more than 5 student or etudiant
     try:
-        f = urllib.request.urlopen(p_link)
-        web_page = f.read()
+        # req = urllib.request.Request(
+        #     p_link,
+        #     data=None,
+        #     headers={
+        #         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
+        #     }
+        # )
+        #
+        # f = urllib.request.urlopen(req)
+        # web_page = f.read()
 
-        if b'student' in web_page:
+        browser = webdriver.Firefox()
+        browser.get(p_link)
+        web_page = browser.page_source
+
+        # print (web_page)
+        #f = urllib.request.urlopen(p_link)
+
+
+        doctoral_c = 0
+        student_c = 0
+        etudiant_c = 0
+        #
+        # for word in web_page.split():
+        #     if word not in wordcount:
+        #         wordcount[word] = 1
+        #     else:
+        #         wordcount[word] += 1
+        #
+        # if 'doctoral' in wordcount:
+        #     doctoral_c = wordcount['doctoral']
+        # if 'student' in wordcount:
+        #     student_c = wordcount['student']
+        # if 'etudiant' in wordcount:
+        #     etudiant_c = wordcount['etudiant_c']
+
+        print(doctoral_c)
+        print(student_c)
+        print(etudiant_c)
+        if '<a href="#">Student	</a>' in web_page:
             return True
         else:
             return False
@@ -111,7 +150,11 @@ def process_info(info_path, photo_path):
     #     # column 6 is the generated
     #     print(row)
     df = pd.read_csv(info_path)
-    print(df[['Email Address', 'Status']])
+    for index, row in df.iterrows():
+        print(row['Email Address'])
+        print(row['EPFL personal page link'])
+        print(verifyMember(row['EPFL personal page link']))
+
     # saved_column = df.column_name
     # print(saved_column)
 

@@ -6,6 +6,11 @@ import requests
 import sys
 import pandas as pd
 from selenium import webdriver
+# email modules
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText  # Added
+from email.mime.image import MIMEImage
+import smtplib
 
 # Member verification and download the images from google drive
 def verifyMember(p_link):
@@ -17,46 +22,15 @@ def verifyMember(p_link):
     # without doctoral
     # more than 5 student or etudiant
     try:
-        # req = urllib.request.Request(
-        #     p_link,
-        #     data=None,
-        #     headers={
-        #         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
-        #     }
-        # )
-        #
-        # f = urllib.request.urlopen(req)
-        # web_page = f.read()
-
+        # the driver needs to be installed to use the following block
         browser = webdriver.Firefox()
         browser.get(p_link)
         web_page = browser.page_source
+        browser.quit()
 
-        # print (web_page)
-        #f = urllib.request.urlopen(p_link)
-
-
-        doctoral_c = 0
-        student_c = 0
-        etudiant_c = 0
-        #
-        # for word in web_page.split():
-        #     if word not in wordcount:
-        #         wordcount[word] = 1
-        #     else:
-        #         wordcount[word] += 1
-        #
-        # if 'doctoral' in wordcount:
-        #     doctoral_c = wordcount['doctoral']
-        # if 'student' in wordcount:
-        #     student_c = wordcount['student']
-        # if 'etudiant' in wordcount:
-        #     etudiant_c = wordcount['etudiant_c']
-
-        print(doctoral_c)
-        print(student_c)
-        print(etudiant_c)
         if '<a href="#">Student	</a>' in web_page:
+            return True
+        elif '<a href="#">Etudiant	</a>' in web_page:
             return True
         else:
             return False
@@ -79,16 +53,7 @@ def generateQR(link):
     qr.make(fit=True)
 
     # Create an image from the QR Code instance
-    img = qr.make_image()
-    img.show()
-    img.save("image.jpg")
-
-
-
-confirmations = []
-
-# download the profile imgs and
-# name them in a specific format
+    return qr.make_image()
 
 def download_file_from_google_drive(id, destination):
     URL = "https://docs.google.com/uc?export=download"
@@ -119,44 +84,97 @@ def save_response_content(response, destination):
             if chunk: # filter out keep-alive new chunks
                 f.write(chunk)
 
-# if __name__ == "__main__":
-#     var = raw_input("Please enter public file id : ")
-#     file_id = str(var)
-#     name = raw_input("Please enter name with extension : ")
-#     destination = str(name)
-#     download_file_from_google_drive(file_id, destination)
+def generateMemberPage(firstN, lastN, status, validity, img_path):
+    # init file constants
+    status = status
+    exp_date = '2019.01.01'
 
-#file_id = '1ZdR3L3qP4Bkq8noWLJHSr_iBau0DNT4Kli4SxNc2YEo'
-#destination = 'test.png'
-#download_file_from_google_drive(file_id, destination)
+    file_name = '../../members/' + firstN + '_' + lastN + '.md'
 
+    # writing to file
+    file = open(file_name, "w+")
+    file.write('---\nlayout: post\n')
+    file.write('title: ' + firstN + ' ' + lastN + '\n---\n\nStatus: ' + status + '\n')
+    file.write('\nExpiration date: ' + exp_date + '\n')
+    if validity:
+        file.write('\nValidity: ' + '<font color="green"> Verified</font> \n')
+    else:
+        file.write('\nValidity: ' + '<font color="red"> Not valid</font> \n')
 
+    file.write('![](/members/' + img_path + ')\n')
+    file.write('![](/members/img/bar.png)\n')
 
-# generateQR('han')
+    file.close()
 
+def send_email(dest_email):
+    attachment = 'image.jpg'
+
+    msg = MIMEMultipart()
+    msg["To"] = "angerhangy@gmail.com"
+    msg["From"] = "clubMontagne2018@gmail.com"
+    msg["Subject"] = "Your membership QR code"
+    text = """\
+        Salut!
+
+        Here is your membership card for Club Montagne at EPFL 
+        
+        If you have any questions or suggestions, feel free to email
+            
+        clubMontagne2018@gmail.com. 
+
+        Cheers,
+        
+        Club Montagne 
+    """
+
+    content = MIMEText(text, 'plain')
+    msg.attach(content)
+
+    fp = open(attachment, 'rb')
+    msgText = MIMEImage(fp.read())
+    msg.attach(msgText)  # Added, and edited the previous line
+
+    print(msg.as_string())
+
+    ## send email
+    mailserver = smtplib.SMTP('smtp.gmail.com', 587)
+    # identify ourselves to smtp gmail client
+    mailserver.ehlo()
+    # secure our email with tls encryption
+    mailserver.starttls()
+    # re-identify ourselves as an encrypted connection
+    mailserver.ehlo()
+    mailserver.login('clubMontagne2018@gmail.com', 's')
+
+    mailserver.sendmail('clubMontagne2018@gmail.com', dest_email, msg.as_string())
+
+    mailserver.quit()
 
 def process_info(info_path, photo_path):
-    # f = open(info_path)
-    # csv_f = csv.reader(f)
-    #
-    # status_id = 1
-    # member_page_id = 4
-    # conStatus_id = 6
-    # for row in csv_f:
-    #     # column 1 as the member status
-    #     row[1] = verifyMember(row[4])
-    #     # colum 5 as the profile url
-    #
-    #     # column 6 is the generated
-    #     print(row)
     df = pd.read_csv(info_path)
+    validities = []
     for index, row in df.iterrows():
-        print(row['Email Address'])
-        print(row['EPFL personal page link'])
-        print(verifyMember(row['EPFL personal page link']))
+        # 1. validate member page
+        #validities.append(verifyMember(row['EPFL personal page link']))
 
-    # saved_column = df.column_name
-    # print(saved_column)
+        # 2. download photo
+        pic_id = row['Profile picture to be shown on the membership card ']
+        pic_id = pic_id.split("id=",1)[1]
+        img_name = row['First name'] + '_' + row['Last name'] + '.png'
+        # download_file_from_google_drive(pic_id, photo_path + img_name)
+
+        # 3. generate member page
+        generateMemberPage( row['First name'],  row['Last name'], row['Status'],  validities[index], 'img/' + img_name)
+
+        # 4. send QR code
+        base_link = 'https://clubmontagne.github.io/members/'
+        qr_img = generateQR(base_link + row['First name'] + '_' + row['Last name'])
+
+        # 5. send QR code to the email
+        send_email(row['Email Address'])
+
+    # df['validity'] = validities
+    # df.to_csv('test.csv')
 
 # specify the excel to process and the member photo path
 # 1. verify if the member status is valid

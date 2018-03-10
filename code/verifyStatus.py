@@ -13,7 +13,7 @@ from email.mime.image import MIMEImage
 import smtplib
 
 # Member verification and download the images from google drive
-def verifyMember(p_link):
+def verifyMember(p_link, status, payment):
     """
     :param p_link: the link of the student profile
     :return: true if the page is valid and contains student
@@ -21,6 +21,12 @@ def verifyMember(p_link):
     """
     # without doctoral
     # more than 5 student or etudiant
+
+    if status != 'Bachelor/Master student':
+        if payment == 'Yes':
+            return True
+        return False
+
     try:
         # the driver needs to be installed to use the following block
         browser = webdriver.Firefox()
@@ -52,8 +58,10 @@ def generateQR(link):
     qr.add_data(link)
     qr.make(fit=True)
 
-    # Create an image from the QR Code instance
-    return qr.make_image()
+    qr_code = qr.make_image()
+    temp_location = 'image.jpg'
+    
+    qr_code.save(temp_location)
 
 def download_file_from_google_drive(id, destination):
     URL = "https://docs.google.com/uc?export=download"
@@ -110,7 +118,7 @@ def send_email(dest_email):
     attachment = 'image.jpg'
 
     msg = MIMEMultipart()
-    msg["To"] = "angerhangy@gmail.com"
+    msg["To"] = "clubMontagne2018@gmail.com"
     msg["From"] = "clubMontagne2018@gmail.com"
     msg["Subject"] = "Your membership QR code"
     text = """\
@@ -144,7 +152,7 @@ def send_email(dest_email):
     mailserver.starttls()
     # re-identify ourselves as an encrypted connection
     mailserver.ehlo()
-    mailserver.login('clubMontagne2018@gmail.com', 's')
+    mailserver.login('clubMontagne2018@gmail.com', '7CD')
 
     mailserver.sendmail('clubMontagne2018@gmail.com', dest_email, msg.as_string())
 
@@ -153,25 +161,31 @@ def send_email(dest_email):
 def process_info(info_path, photo_path):
     df = pd.read_csv(info_path)
     validities = []
+    wrong_emails = []
     for index, row in df.iterrows():
         # 1. validate member page
-        #validities.append(verifyMember(row['EPFL personal page link']))
+        validities.append(verifyMember(row['EPFL personal page link'], row['Status'], row['Payment']))
 
         # 2. download photo
-        pic_id = row['Profile picture to be shown on the membership card ']
+        pic_id = row['Profile picture']
         pic_id = pic_id.split("id=",1)[1]
         img_name = row['First name'] + '_' + row['Last name'] + '.png'
-        # download_file_from_google_drive(pic_id, photo_path + img_name)
+        download_file_from_google_drive(pic_id, photo_path + img_name)
 
         # 3. generate member page
         generateMemberPage( row['First name'],  row['Last name'], row['Status'],  validities[index], 'img/' + img_name)
 
         # 4. send QR code
         base_link = 'https://clubmontagne.github.io/members/'
-        qr_img = generateQR(base_link + row['First name'] + '_' + row['Last name'])
+        generateQR(base_link + row['First name'] + '_' + row['Last name'])
 
         # 5. send QR code to the email
-        send_email(row['Email Address'])
+        try:
+            send_email(row['Email Address'])
+        except:
+            wrong_emails.append(row['Email Address'])
+
+    print(wrong_emails)
 
     # df['validity'] = validities
     # df.to_csv('test.csv')

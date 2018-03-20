@@ -4,6 +4,8 @@ Python 3.0+
 pyqrcode
 selenium and its driver for getting the page source and member verification
 
+## Prepare the data
+After download the data, one will need to add tow columns into the csv, 'Payment' and 'Email_sent'
 
 ## How to setup env
 ```

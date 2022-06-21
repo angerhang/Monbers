@@ -2,7 +2,7 @@ PyQRCode==1.2.1
 certifi==2018.1.18
 chardet==3.0.4
 idna==2.6
-numpy==1.14.0
+numpy==1.22.0
 pandas==0.22.0
 PyQRCode==1.2.1
 python-dateutil==2.6.1
@@ -15,7 +15,7 @@ certifi==2018.1.18
 chardet==3.0.4
 ez-setup==0.9
 idna==2.6
-numpy==1.14.0
+numpy==1.22.0
 pandas==0.22.0
 PyQRCode==1.2.1
 python-dateutil==2.6.1
@@ -29,7 +29,7 @@ certifi==2018.1.18
 chardet==3.0.4
 ez-setup==0.9
 idna==2.6
-numpy==1.14.0
+numpy==1.22.0
 pandas==0.22.0
 Pillow==5.0.0
 PyQRCode==1.2.1
@@ -44,7 +44,7 @@ certifi==2018.1.18
 chardet==3.0.4
 ez-setup==0.9
 idna==2.6
-numpy==1.14.0
+numpy==1.22.0
 pandas==0.22.0
 Pillow==5.0.0
 PyQRCode==1.2.1
